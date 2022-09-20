@@ -8,13 +8,9 @@ MOVE_LEFT = 'L'
 MOVE_RIGHT = 'R'
 MOVE_UP = 'U'
 
-
-
 ##############################################################
 # Please put your code here (imports, variables, functions...)
 ##############################################################
-
-
 
 
 ##############################################################
@@ -31,8 +27,9 @@ MOVE_UP = 'U'
 # time_allowed : float
 ##############################################################
 
-def preprocessing (maze_map, maze_width, maze_height, player_location, opponent_location, pieces_of_cheese, time_allowed) :
-    
+def preprocessing(maze_map, maze_width, maze_height, player_location, opponent_location,
+                  pieces_of_cheese, time_allowed):
+
     # Example prints that appear in the shell only at the beginning of the game
     # Remove them when you write your own program
     print("maze_map", type(maze_map), maze_map)
@@ -42,7 +39,6 @@ def preprocessing (maze_map, maze_width, maze_height, player_location, opponent_
     print("opponent_location", type(opponent_location), opponent_location)
     print("pieces_of_cheese", type(pieces_of_cheese), pieces_of_cheese)
     print("time_allowed", type(time_allowed), time_allowed)
-
 
 
 ##############################################################
@@ -60,10 +56,9 @@ def preprocessing (maze_map, maze_width, maze_height, player_location, opponent_
 # time_allowed : float
 ##############################################################
 
-def turn (maze_map, maze_width, maze_height, player_location, opponent_location, player_score, opponent_score, pieces_of_cheese, time_allowed) :
-    
+def turn(maze_map, maze_width, maze_height, player_location, opponent_location,
+         player_score, opponent_score, pieces_of_cheese, time_allowed):
+
     # We go up at every turn
     # You should replace this with more intelligent decisions
     return MOVE_UP
-
-

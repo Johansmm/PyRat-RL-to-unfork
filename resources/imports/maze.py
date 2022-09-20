@@ -19,21 +19,25 @@ import random
 import sys
 import resources.imports.parameters
 
-sys.setrecursionlimit(10**6) 
+sys.setrecursionlimit(10**6)
 
 # compute the connected component of a given initial cell with depth-first search
+
+
 def connected_region(maze, cell, connected, possible_border):
-  for (i,j) in maze[cell]:
-    if connected[i][j] == 0:
-        connected[i][j] = 1
-        possible_border.append((i,j))
-        connected_region(maze, (i, j), connected, possible_border)
+    for (i, j) in maze[cell]:
+        if connected[i][j] == 0:
+            connected[i][j] = 1
+            possible_border.append((i, j))
+            connected_region(maze, (i, j), connected, possible_border)
+
 
 def gen_mud(mud_density, mud_range):
     if random.uniform(0, 1) < mud_density:
         return random.randrange(2, mud_range + 1)
     else:
         return 1
+
 
 def generate_maze(width, height, target_density, connected, symmetry, mud_density, mud_range, maze_file, seed):
     if maze_file != "":
@@ -45,16 +49,16 @@ def generate_maze(width, height, target_density, connected, symmetry, mud_densit
         maze = {}
         for i in range(width):
             for j in range(height):
-                maze[(i,j)] = {}
-                line = lines[i + j * width +2].split(" ")
+                maze[(i, j)] = {}
+                line = lines[i + j * width + 2].split(" ")
                 if line[0] != "0":
-                    maze[(i,j)][(i,j+1)] = int(line[0])
+                    maze[(i, j)][(i, j+1)] = int(line[0])
                 if line[1] != "0":
-                    maze[(i,j)][(i,j-1)] = int(line[1])
+                    maze[(i, j)][(i, j-1)] = int(line[1])
                 if line[2] != "0":
-                    maze[(i,j)][(i-1,j)] = int(line[2])
+                    maze[(i, j)][(i-1, j)] = int(line[2])
                 if line[3] != "0":
-                    maze[(i,j)][(i+1,j)] = int(line[3])
+                    maze[(i, j)][(i+1, j)] = int(line[3])
         player1_location_index = int(lines[height*width+2])
         player1_location = (player1_location_index % width, player1_location_index // width)
         player2_location_index = int(lines[height*width+3])
@@ -67,48 +71,52 @@ def generate_maze(width, height, target_density, connected, symmetry, mud_densit
     else:
         random.seed(seed)
         # Start with purely random maze
-        maze = {};
-        not_considered = {};
+        maze = {}
+        not_considered = {}
         for i in range(width):
             for j in range(height):
-                maze[(i,j)] = {}
-                not_considered[(i,j)] = True
+                maze[(i, j)] = {}
+                not_considered[(i, j)] = True
         for i in range(width):
             for j in range(height):
-                if not(symmetry) or not_considered[(i,j)]:
-                    if random.uniform(0,1) > target_density and i + 1 < width:
+                if not(symmetry) or not_considered[(i, j)]:
+                    if random.uniform(0, 1) > target_density and i + 1 < width:
                         m = gen_mud(mud_density, mud_range)
-                        maze[(i,j)][(i+1,j)] = m
-                        maze[(i+1,j)][(i,j)] = m
+                        maze[(i, j)][(i+1, j)] = m
+                        maze[(i+1, j)][(i, j)] = m
                         if symmetry:
-                            maze[(width - 1 - i, height - 1 - j)][(width - 2 - i, height - 1 - j)] = m
-                            maze[(width - 2 - i, height - 1 - j)][(width - 1 - i, height - 1 - j)] = m
-                    if random.uniform(0,1) > target_density and j + 1 < height:
+                            maze[(width - 1 - i, height - 1 - j)
+                                 ][(width - 2 - i, height - 1 - j)] = m
+                            maze[(width - 2 - i, height - 1 - j)
+                                 ][(width - 1 - i, height - 1 - j)] = m
+                    if random.uniform(0, 1) > target_density and j + 1 < height:
                         m = gen_mud(mud_density, mud_range)
-                        maze[(i,j)][(i,j+1)] = m
-                        maze[(i,j+1)][(i,j)] = m
+                        maze[(i, j)][(i, j+1)] = m
+                        maze[(i, j+1)][(i, j)] = m
                         if symmetry:
-                            maze[(width - 1 - i, height - 2 - j)][(width - 1 - i, height - 1 - j)] = m
-                            maze[(width - 1 - i, height - 1 - j)][(width - 1 - i, height - 2 - j)] = m
+                            maze[(width - 1 - i, height - 2 - j)
+                                 ][(width - 1 - i, height - 1 - j)] = m
+                            maze[(width - 1 - i, height - 1 - j)
+                                 ][(width - 1 - i, height - 2 - j)] = m
                     if symmetry:
-                        not_considered[(i,j)] = False
+                        not_considered[(i, j)] = False
                         not_considered[(width - 1 - i, height - 1 - j)] = False
         for i in range(width):
             for j in range(height):
-                if len(maze[(i,j)]) == 0 and (i == 0 or j == 0 or i == width - 1 or j == height - 1):
+                if len(maze[(i, j)]) == 0 and (i == 0 or j == 0 or i == width - 1 or j == height - 1):
                     m = gen_mud(mud_density, mud_range)
                     possibilities = []
                     if i + 1 < width:
-                        possibilities.append((i+1,j))
+                        possibilities.append((i+1, j))
                     if j + 1 < height:
-                        possibilities.append((i,j+1))
+                        possibilities.append((i, j+1))
                     if i - 1 >= 0:
-                        possibilities.append((i-1,j))
+                        possibilities.append((i-1, j))
                     if j - 1 >= 0:
-                        possibilities.append((i,j-1))
+                        possibilities.append((i, j-1))
                     chosen = possibilities[random.randrange(len(possibilities))]
-                    maze[(i,j)][chosen] = m                
-                    maze[chosen][(i,j)] = m
+                    maze[(i, j)][chosen] = m
+                    maze[chosen][(i, j)] = m
                     if symmetry:
                         ii, jj = chosen
                         maze[(width - 1 - i, height - 1 - j)][(width - 1 - ii, height - 1 - jj)] = m
@@ -117,36 +125,36 @@ def generate_maze(width, height, target_density, connected, symmetry, mud_densit
         # Then connect it
         if connected:
             connected = [[0 for x in range(height)] for y in range(width)]
-            possible_border = [(0,height-1)]
+            possible_border = [(0, height-1)]
             connected[0][height-1] = 1
-            connected_region(maze, (0,height-1), connected, possible_border)
+            connected_region(maze, (0, height-1), connected, possible_border)
             while 1:
                 border = []
                 new_possible_border = []
-                for (i,j) in possible_border:
+                for (i, j) in possible_border:
                     is_candidate = False
-                    if not((i+1,j) in maze[(i,j)]) and i + 1 < width:
+                    if not((i+1, j) in maze[(i, j)]) and i + 1 < width:
                         if connected[i+1][j] == 0:
-                            border.append(((i,j),(i+1,j)))
+                            border.append(((i, j), (i+1, j)))
                             is_candidate = True
-                    if not((i-1,j) in maze[(i,j)]) and i > 0:
+                    if not((i-1, j) in maze[(i, j)]) and i > 0:
                         if connected[i-1][j] == 0:
-                            border.append(((i,j),(i-1,j)))
-                            is_candidate = True                            
-                    if not((i,j+1) in maze[(i,j)]) and j + 1 < height:
+                            border.append(((i, j), (i-1, j)))
+                            is_candidate = True
+                    if not((i, j+1) in maze[(i, j)]) and j + 1 < height:
                         if connected[i][j+1] == 0:
-                            border.append(((i,j),(i,j+1)))
-                            is_candidate = True                    
-                    if not((i,j-1) in maze[(i,j)]) and j > 0:
+                            border.append(((i, j), (i, j+1)))
+                            is_candidate = True
+                    if not((i, j-1) in maze[(i, j)]) and j > 0:
                         if connected[i][j-1] == 0:
-                            border.append(((i,j),(i,j-1)))
+                            border.append(((i, j), (i, j-1)))
                             is_candidate = True
                     if is_candidate:
-                        new_possible_border.append((i,j))
+                        new_possible_border.append((i, j))
                 possible_border = new_possible_border
                 if border == []:
                     break
-                a,b = border[random.randrange(len(border))]
+                a, b = border[random.randrange(len(border))]
                 m = gen_mud(mud_density, mud_range)
                 maze[a][b] = m
                 maze[b][a] = m
@@ -166,11 +174,13 @@ def generate_maze(width, height, target_density, connected, symmetry, mud_densit
                         connected_region(maze, bsym, connected, possible_border)
                         possible_border.append(bsym)
         pieces_of_cheese = []
-        player1_location = (0,0)
+        player1_location = (0, 0)
         player2_location = (width - 1, height - 1)
     return width, height, pieces_of_cheese, maze, player1_location, player2_location
 
 # Generate pieces of cheese
+
+
 def generate_pieces_of_cheese(nb_pieces, width, height, symmetry, player1_location, player2_location, start_random):
     if start_random:
         remaining = nb_pieces + 2
@@ -181,17 +191,18 @@ def generate_pieces_of_cheese(nb_pieces, width, height, symmetry, player1_locati
     considered = []
     if symmetry:
         if nb_pieces % 2 == 1 and (width % 2 == 0 or height % 2 == 0):
-            sys.exit("The maze has even width or even height and thus cannot contain an odd number of pieces of cheese if symmetric.")
+            sys.exit(
+                "The maze has even width or even height and thus cannot contain an odd number of pieces of cheese if symmetric.")
         if nb_pieces % 2 == 1:
             pieces.append((width // 2, height // 2))
             considered.append((width // 2, height // 2))
             remaining = remaining - 1
     for i in range(width):
         for j in range(height):
-            if (not(symmetry) or not((i,j) in considered)) and (i,j) != player1_location and (i,j) != player2_location and (i,j) != (width - 1 - i, height - 1 - j):
-                candidates.append((i,j))
+            if (not(symmetry) or not((i, j) in considered)) and (i, j) != player1_location and (i, j) != player2_location and (i, j) != (width - 1 - i, height - 1 - j):
+                candidates.append((i, j))
                 if symmetry:
-                    considered.append((i,j))
+                    considered.append((i, j))
                     considered.append((width - 1 - i, height - 1 - j))
     while remaining > 0:
         if len(candidates) == 0:
@@ -210,4 +221,3 @@ def generate_pieces_of_cheese(nb_pieces, width, height, symmetry, player1_locati
         pieces.append(player1_location)
         pieces.append(player2_location)
     return pieces[:-2], pieces[-2], pieces[-1]
-        

@@ -9,16 +9,21 @@ MOVE_LEFT = 'L'
 MOVE_RIGHT = 'R'
 MOVE_UP = 'U'
 
+
 def distance(la, lb):
-    ax,ay = la
-    bx,by = lb
+    ax, ay = la
+    bx, by = lb
     return abs(bx - ax) + abs(by - ay)
 
-def preprocessing(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation, piecesOfCheese, timeAllowed):
+
+def preprocessing(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation,
+                  piecesOfCheese, timeAllowed):
     pass
 
-def turn(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese, timeAllowed):    
-    closest_poc = (-1,-1)
+
+def turn(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation,
+         playerScore, opponentScore, piecesOfCheese, timeAllowed):
+    closest_poc = (-1, -1)
     best_distance = mazeWidth + mazeHeight
     for poc in piecesOfCheese:
         if distance(poc, playerLocation) < best_distance:

@@ -9,11 +9,9 @@ MOVE_RIGHT = 'R'
 MOVE_UP = 'U'
 
 
-
 ##############################################################
 # Please put your code here (imports, variables, functions...)
 ##############################################################
-
 
 
 ##############################################################
@@ -30,11 +28,10 @@ MOVE_UP = 'U'
 # time_allowed : float
 ##############################################################
 
-def preprocessing (maze_map, maze_width, maze_height, player_location, opponent_location, pieces_of_cheese, time_allowed) :
+def preprocessing(maze_map, maze_width, maze_height, player_location, opponent_location, pieces_of_cheese, time_allowed):
 
     # Does nothing
     pass
-
 
 
 ##############################################################
@@ -52,10 +49,7 @@ def preprocessing (maze_map, maze_width, maze_height, player_location, opponent_
 # time_allowed : float
 ##############################################################
 
-def turn (maze_map, maze_width, maze_height, player_location, opponent_location, player_score, opponent_score, pieces_of_cheese, time_allowed) :
+def turn(maze_map, maze_width, maze_height, player_location, opponent_location, player_score, opponent_score, pieces_of_cheese, time_allowed):
 
     # Does nothing
     return
-
-
-
