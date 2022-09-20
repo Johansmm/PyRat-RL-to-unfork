@@ -15,6 +15,10 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
+  <a href="https://github.com/Johansmm/PyRat-RL">
+    <img src="/images/win.gif" alt="Logo">
+  </a>
+
   <h2 align="center"><b> PyRat RL </h2></b>
 
   <p align="center">
