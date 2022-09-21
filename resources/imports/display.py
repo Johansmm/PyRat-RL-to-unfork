@@ -449,3 +449,6 @@ def run(maze, width, height, q, q_render_in, q_quit, p1name, p2name, q1_out, q2_
         q2_out.put("")
     if is_human_rat:
         q1_out.put("")
+
+if 'SDL_VIDEO_WINDOW_POS' not in os.environ:
+    os.environ['SDL_VIDEO_WINDOW_POS'] = "20, 20"
