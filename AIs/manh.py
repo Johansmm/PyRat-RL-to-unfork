@@ -3,17 +3,7 @@
 # This is useless for PyRat
 #####################################
 
-
-MOVE_DOWN = 'D'
-MOVE_LEFT = 'L'
-MOVE_RIGHT = 'R'
-MOVE_UP = 'U'
-
-
-def distance(la, lb):
-    ax, ay = la
-    bx, by = lb
-    return abs(bx - ax) + abs(by - ay)
+from .utils import MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, distance
 
 
 def preprocessing(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation,
