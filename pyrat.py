@@ -107,7 +107,10 @@ def player(pet, filename, q_in, q_out, q_quit, width, height, preparation_time, 
         filename = py_file_name
     # We try to launch a regular AI
     try:
-        player = importlib.util.spec_from_file_location("player", filename)
+        # Introduce 'AIs.' on player name to allow relative imports
+        # source: https://stackoverflow.com/questions/50884100/using-importlib-to-dynamically-
+        #         import-modules-containing-relative-imports
+        player = importlib.util.spec_from_file_location("AIs.player", filename)
         module = importlib.util.module_from_spec(player)
         player.loader.exec_module(module)
         existence = True
