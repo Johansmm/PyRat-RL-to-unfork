@@ -5,11 +5,7 @@
 
 # Import of random module
 import random
-
-MOVE_DOWN = 'D'
-MOVE_LEFT = 'L'
-MOVE_RIGHT = 'R'
-MOVE_UP = 'U'
+from .utils import ALL_MOVES
 
 ##############################################################
 # Please put your code here (imports, variables, functions...)
@@ -17,10 +13,7 @@ MOVE_UP = 'U'
 
 
 def random_move():
-
-    # Returns a random move
-    all_moves = [MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP]
-    return random.choice(all_moves)
+    return random.choice(ALL_MOVES)
 
 
 ##############################################################
