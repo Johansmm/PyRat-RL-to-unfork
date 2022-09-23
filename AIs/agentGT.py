@@ -10,13 +10,13 @@
 # python pyrat.py -d 0 -md 0 -p 7 --rat AIs/agentGT.py --python AIs/manh.py --nonsymmetric
 
 # If enough computation time is allowed,
-# it is reasonable to grow the number of pieces of cheese up to around 15.
+# it is reasonable to grow the number of pieces of cheese up to around 17.
 # For example:
 
-# python pyrat.py -d 0 -md 0 -p 13 --rat AIs/agentGT.py --python AIs/manh.py --synchronous\
+# python pyrat.py -d 0 -md 0 -p 15 --rat AIs/agentGT.py --python AIs/manh.py --synchronous\
 #                 --tests 100 --nodrawing --nonsymmetric
 
-# In this example, we can obtain scores in the order of: "win_python": 0.07 "win_rat": 0.93
+# In this example, we can obtain scores in the order of: "win_python": 0.08 "win_rat": 0.91
 
 import numpy as np
 from .utils import MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, move, move_to_target, update_scores
@@ -104,6 +104,9 @@ def best_target(playerLocation, opponentLocation, playerScore, opponentScore, pi
         if score > best_score_so_far:
             best_score_so_far = score
             best_target_so_far = target
+        # If player knows that will win, it makes no sense to continue
+        if score > totalPieces / 2 and score > end_state[-2]:
+            break
 
     return best_target_so_far, best_score_so_far
 
