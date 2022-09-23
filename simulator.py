@@ -1,53 +1,8 @@
-import sys
 import numpy as np
+
 from AIs import manh
-import random
-
-
-def generate_pieces_of_cheese(nb_pieces, width, height, symmetry,
-                              player1_location, player2_location, start_random):
-    if start_random:
-        remaining = nb_pieces + 2
-    else:
-        remaining = nb_pieces
-        player1_location = (0, 0)
-        player2_location = (width - 1, height - 1)
-    pieces = []
-    candidates = []
-    considered = []
-    if symmetry:
-        if nb_pieces % 2 == 1 and (width % 2 == 0 or height % 2 == 0):
-            sys.exit("[ERROR] The maze has even width or even height and thus cannot contain "
-                     "an odd number of pieces of cheese if symmetric.")
-        if nb_pieces % 2 == 1:
-            pieces.append((width // 2, height // 2))
-            considered.append((width // 2, height // 2))
-            remaining = remaining - 1
-    for i in range(width):
-        for j in range(height):
-            if (not (symmetry and (i, j) in considered) and (i, j) != player1_location
-                    and (i, j) != player2_location):
-                candidates.append((i, j))
-                if symmetry:
-                    considered.append((i, j))
-                    considered.append((width - 1 - i, height - 1 - j))
-    while remaining > 0:
-        if len(candidates) == 0:
-            sys.exit("[ERROR] Too many pieces of cheese for that dimension of maze")
-        chosen = candidates[random.randrange(len(candidates))]
-        pieces.append(chosen)
-        if symmetry:
-            a, b = chosen
-            pieces.append((width - a - 1, height - 1 - b))
-            symmetric = (width - a - 1, height - 1 - b)
-            candidates = [i for i in candidates if i != symmetric]
-            remaining = remaining - 1
-        candidates = [i for i in candidates if i != chosen]
-        remaining = remaining - 1
-    if not start_random:
-        pieces.append(player1_location)
-        pieces.append(player2_location)
-    return pieces[:-2], pieces[-2], pieces[-1]
+from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES
+from resources.imports.maze import generate_pieces_of_cheese
 
 
 class PyRat(object):
@@ -71,53 +26,35 @@ class PyRat(object):
         Input: actions and states
         Ouput: new states and reward
         """
-
-        MOVE_DOWN = 'D'
-        MOVE_LEFT = 'L'
-        MOVE_RIGHT = 'R'
-        MOVE_UP = 'U'
-
         (xx, yy) = self.enemy
         enemy_action_x = 0
         enemy_action_y = 0
 
-        if enemy_action == MOVE_DOWN:
-            if yy > 0:
-                enemy_action_x = 0
-                enemy_action_y = -1
-        elif enemy_action == MOVE_UP:
-            if yy < self.height - 1:
-                enemy_action_x = 0
-                enemy_action_y = +1
-        elif enemy_action == MOVE_LEFT:
-            if xx > 0:
-                enemy_action_x = -1
-                enemy_action_y = 0
-        elif enemy_action == MOVE_RIGHT:
-            if xx < self.width - 1:
-                enemy_action_x = +1
-                enemy_action_y = 0
-        else:
-            print("FUUUU")
-            enemy_action_x = 0
-            enemy_action_y = 0
-#            raise Exception("INVALID MOVEMENT ENEMY")
-
+        if enemy_action == MOVE_DOWN and yy > 0:
+            enemy_action_y = -1
+        elif enemy_action == MOVE_UP and yy < self.height - 1:
+            enemy_action_y = +1
+        elif enemy_action == MOVE_LEFT and xx > 0:
+            enemy_action_x = -1
+        elif enemy_action == MOVE_RIGHT and xx < self.width - 1:
+            enemy_action_x = +1
+        elif enemy_action not in ALL_MOVES:
+            print("FUUUU: Opponent uncertain movement. Stay in same position.")
         self.enemy = (xx + enemy_action_x, yy + enemy_action_y)
 
         self.round += 1
         action_x = 0
         action_y = 0
-        if action == 0:
-            action_x = -1  # left
-        elif action == 1:
-            action_x = 1  # right
-        elif action == 2:
-            action_y = 1  # up
-        elif action == 3:
-            action_y = -1  # down
+        if action == MOVE_LEFT:
+            action_x = -1
+        elif action == MOVE_RIGHT:
+            action_x = 1
+        elif action == MOVE_UP:
+            action_y = 1
+        elif action == MOVE_DOWN:
+            action_y = -1
         else:
-            raise Exception("INVALID MOVEMENT PLAYER")
+            raise ValueError("INVALID MOVEMENT PLAYER")
         (x, y) = self.player
         new_x = x + action_x
         new_y = y + action_y
@@ -191,7 +128,7 @@ class PyRat(object):
     def reset(self):
         self.piecesOfCheese, self.player, self.enemy = generate_pieces_of_cheese(
             self.cheeses, self.width, self.height, self.symmetric,
-            (-1, -1), (-1, -1), self.start_random)
+            (0, 0), (self.width - 1, self.height - 1), self.start_random)
         self.round = 0
         self.illegal_move = False
         self.score = 0
