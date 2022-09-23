@@ -1,7 +1,7 @@
 import numpy as np
 
 from AIs import manh
-from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES
+from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES, update_scores
 from resources.imports.maze import generate_pieces_of_cheese
 
 
@@ -85,25 +85,10 @@ class PyRat(object):
         if self.round > self.round_limit:
             return -1  # Lost for max_round
 
-        # Check if player is on cheese
-        player_on_cheese = self.player in self.piecesOfCheese
-        reward = 0
-        if player_on_cheese:
-            reward = 1.0
-            self.piecesOfCheese.remove(self.player)
-
-        # Now check if opponent is on another cheese
-        opponent_on_cheese = self.enemy in self.piecesOfCheese
-        if opponent_on_cheese:
-            self.enemy_score += 1.0
-            self.piecesOfCheese.remove(self.enemy)
-
-        # Penalizes players if they obtained the same cheese
-        if player_on_cheese and self.player == self.enemy:
-            reward = 0.5
-            self.enemy_score += 0.5
-        self.score += reward
-        return reward
+        old_score = self.score
+        self.score, self.enemy_score = update_scores(
+            self.player, self.enemy, self.score, self.enemy_score, self.piecesOfCheese)
+        return self.score - old_score
 
     def _is_over(self):
         if self.score > self.cheeses / 2 or self.enemy_score > self.cheeses / 2 or (
