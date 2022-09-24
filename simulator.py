@@ -1,4 +1,7 @@
+import os
 import numpy as np
+import argparse
+import importlib.util
 
 from AIs import manh
 from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES, update_scores
@@ -153,15 +156,28 @@ class PyRat(object):
         else:
             return False
 
-    def observe(self):
+    def observe(self, full=False):
         """Return the current maze map
+
+        Parameters
+        ----------
+        full : bool, optional
+            Return full description of game, by default False
 
         Returns
         -------
-        np.ndarray
+        List[objects] (full=True)
+            Full state of the game (maze_map, width, height, player_pos, enemy_pos,
+                                    player_score, enemy_score, piecesOfCheese, allowed_time)
+        np.ndarray (full=False)
             Maze map of size (1, height, width, 3)
         """
-        return np.expand_dims(self.canvas, axis=0)
+        maze_map = np.expand_dims(self.canvas, axis=0)
+        if full:
+            return (maze_map, self.width, self.height, self.player, self.enemy, self.score,
+                    self.enemy_score, self.piecesOfCheese, 30000)
+        else:
+            return maze_map
 
     def act(self, action):
         """Advance one step in the game, where the following steps are executed:
@@ -206,3 +222,71 @@ class PyRat(object):
             self.opponent.preprocessing(None, self.width, self.height,
                                         self.enemy, self.player, self.piecesOfCheese, 30000)
             self.preprocess = True
+
+
+def parse_args():
+    parser = argparse.ArgumentParser("Simulator of PyRat")
+    parser.add_argument('--rat', type=str, metavar="rat_file", default="",
+                        help='Program to control the rat (local file)')
+    parser.add_argument('--python', type=str, metavar="python_file", default="",
+                        help='Program to control the python (local file)')
+    parser.add_argument('-x', '--width', type=int, metavar="x", default=31,
+                        help='Width of the maze, by default %(default)s')
+    parser.add_argument('-y', '--height', type=int, metavar="y", default=29,
+                        help='Height of the maze, by default %(default)s')
+    parser.add_argument('-p', '--pieces', type=int, metavar="p", default=41,
+                        help='Number of pieces of cheese, by default %(default)s')
+    parser.add_argument('--nonsymmetric', action="store_true",
+                        help='Do not enforce symmetry of the maze')
+    parser.add_argument('-mt', '--max_turns', type=int, metavar="mt", default=2000,
+                        help='Max number of turns, by default %(default)s')
+    parser.add_argument('--start_random', action="store_true",
+                        help='Players start at random location in the maze')
+    return parser.parse_args()
+
+
+def _read_player(filename):
+    try:
+        player = importlib.util.spec_from_file_location("AIs.player", filename)
+        module = importlib.util.module_from_spec(player)
+        player.loader.exec_module(module)
+    except Exception:
+        if filename != "":
+            raise ValueError(f"Impossible to load player of {filename}")
+        player = importlib.util.spec_from_file_location(
+            "player", os.path.join("resources", "imports", "dummy_player.py"))
+        module = importlib.util.module_from_spec(player)
+        player.loader.exec_module(module)
+    return module
+
+
+def play_game(args):
+    args_dict = vars(args)
+    # Read players from python script
+    player = _read_player(args_dict.pop("rat"))
+    opponent = args_dict.pop("python")
+    if opponent != "":
+        args_dict["opponent"] = _read_player(opponent)
+
+    # Create the enviroment of game
+    args_dict["round_limit"] = args_dict.pop("max_turns")
+    args_dict["symmetric"] = not args_dict.pop("nonsymmetric")
+    args_dict["cheeses"] = args_dict.pop("pieces")
+    game = PyRat(**args_dict)
+    player.preprocessing(None, game.width, game.height, game.enemy, game.player,
+                         game.piecesOfCheese, 30000)
+
+    # Run the game
+    while not game._is_over():
+        # From the state of the game, the player can make a decision
+        action = player.turn(*game.observe(full=True))
+        # This action directly affects the environment
+        game.act(action)
+
+    # Print records of game
+    print(f"[INFO] final player's score: {game.score}")
+    print(f"[INFO] final opponent's score: {game.enemy_score}")
+
+
+if __name__ == "__main__":
+    play_game(parse_args())
