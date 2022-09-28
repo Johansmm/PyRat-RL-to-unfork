@@ -1,4 +1,6 @@
 import os
+import sys
+import random
 import numpy as np
 import argparse
 import importlib.util
@@ -31,10 +33,12 @@ class PyRat(object):
         Players start at random location in the maze (--start_random), by default True
     opponent : object, optional
         Oponent AIs (--python), by default manh
+    random_seed : int, optional
+        Random seed, by default None
     """
 
     def __init__(self, width=21, height=15, round_limit=200, cheeses=41, symmetric=False,
-                 start_random=True, opponent=manh):
+                 start_random=True, opponent=manh, random_seed=None):
         self.preprocess = False
         self.symmetric = symmetric
         self.start_random = start_random
@@ -46,7 +50,7 @@ class PyRat(object):
         self.round = 0
         self.score = 0
         self.opponent = opponent
-        self.reset()
+        self.reset(random_seed=random_seed)
 
     def _update_state(self, action, enemy_action):
         """Players' action, which update the state of the game
@@ -207,9 +211,16 @@ class PyRat(object):
         game_over = self._is_over()
         return self.observe(), reward, game_over
 
-    def reset(self):
+    def reset(self, random_seed=None):
         """Reset scores, positions and create a new list of cheeses
+
+        Parameters
+        ----------
+        random_seed : int, optional
+            Random seed, by default None
         """
+        self.random_seed = random.randint(0, sys.maxsize) if random_seed is None else random_seed
+        random.seed(self.random_seed)
         self.piecesOfCheese, self.player, self.enemy = generate_pieces_of_cheese(
             self.cheeses, self.width, self.height, self.symmetric,
             (0, 0), (self.width - 1, self.height - 1), self.start_random)
@@ -242,6 +253,8 @@ def parse_args():
                         help='Max number of turns, by default %(default)s')
     parser.add_argument('--start_random', action="store_true",
                         help='Players start at random location in the maze')
+    parser.add_argument('--random_seed', type=int, metavar="random_seed", default=None,
+                        help='Random seed to use in order to generate a specific maze')
     return parser.parse_args()
 
 
