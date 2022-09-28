@@ -38,7 +38,7 @@ class PyRat(object):
     """
 
     def __init__(self, width=21, height=15, round_limit=200, cheeses=41, symmetric=False,
-                 start_random=True, opponent=manh, random_seed=None):
+                 start_random=True, opponent=manh, random_seed=None, **kwargs):
         self.preprocess = False
         self.symmetric = symmetric
         self.start_random = start_random
@@ -255,6 +255,8 @@ def parse_args():
                         help='Players start at random location in the maze')
     parser.add_argument('--random_seed', type=int, metavar="random_seed", default=None,
                         help='Random seed to use in order to generate a specific maze')
+    parser.add_argument('--num_games', type=int, metavar="num_games", default=1,
+                        help='Number of games to launch (for statistics), by default %(default)s')
     return parser.parse_args()
 
 
@@ -289,16 +291,31 @@ def play_game(args):
     player.preprocessing(None, game.width, game.height, game.enemy, game.player,
                          game.piecesOfCheese, 30000)
 
-    # Run the game
-    while not game._is_over():
-        # From the state of the game, the player can make a decision
-        action = player.turn(*game.observe(full=True))
-        # This action directly affects the environment
-        game.act(action)
+    # Run all games
+    python_name = game.opponent.__name__
+    rat_name = player.__name__
+    for match in range(args.num_games):
+        print(f"Using seed {game.random_seed}")
+        if args.num_games > 1:
+            print(f"Match {match+1}/{args.num_games}")
+        while not game._is_over():
+            # From the state of the game, the player can make a decision
+            action = player.turn(*game.observe(full=True))
+            # This action directly affects the environment
+            game.act(action)
 
-    # Print records of game
-    print(f"[INFO] final player's score: {game.score}")
-    print(f"[INFO] final opponent's score: {game.enemy_score}")
+        # Print records of game
+        score = f"{game.score}/{game.enemy_score}"
+        if game.score < game.enemy_score:
+            print(f"The Python ({python_name}) won the match! ({score})")
+        elif game.score > game.enemy_score:
+            print(f"The Rat ({rat_name}) won the match! ({score})")
+        else:
+            print(f"The Rat ({rat_name}) and the Python ({python_name}) "
+                  f"got the same number of pieces of cheese! ({score})")
+
+        # To next game, reset all status
+        game.reset()
 
 
 if __name__ == "__main__":
