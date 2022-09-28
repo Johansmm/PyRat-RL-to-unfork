@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+import copy
 import random
 import numpy as np
 import argparse
@@ -235,6 +237,108 @@ class PyRat(object):
             self.preprocess = True
 
 
+class Statistics():
+    """Save all record's history of several games
+
+    Attributes
+    ----------
+    moves : list
+        Record of movements per game
+    score_python : list
+        Record of python's score per game
+    score_rat : list
+        Record of rat's score per game
+    win_python : float
+        Python's total score
+    win_rat : float
+        Rat's total score
+    num_games : int
+        Number of games append in stats
+
+    Parameters
+    ----------
+    ini_score_rat : float, optional
+        Initial rat's score, by default 0
+    ini_score_python : float, optional
+        Initial python's score, by default 0
+    ini_moves : int, optional
+        Initial moves per player, by default 0
+    """
+
+    def __init__(self, ini_score_rat=0.0, ini_score_python=0.0, ini_moves=0):
+        self.reset()
+        self._params = [k for k, v in vars(self).items() if isinstance(v, (list, float, int))]
+        if ini_score_rat != 0 or ini_score_python != 0 or ini_moves != 0:
+            self.__add__((ini_score_rat, ini_score_python, ini_moves))
+
+    def get_stats(self):
+        """Get summary of stats
+
+        Returns
+        -------
+        dict
+            Statistics
+
+        Raises
+        ------
+        ValueError
+            :attr:`num_game` must be higher than 0
+        """
+        if self.num_games == 0:
+            raise ValueError("Please introduce at least one game!.")
+        return {
+            "moves_per_player": sum(self.moves) / self.num_games,
+            "score_rat": sum(self.score_rat) / self.num_games,
+            "score_python": sum(self.score_python) / self.num_games,
+            "win_rat": self.win_rat / self.num_games,
+            "win_python": self.win_python / self.num_games,
+            "num_games": self.num_games
+        }
+
+    def __add__(self, stats):
+        """Add new stats
+
+        Parameters
+        ----------
+        stats : Union[Tuple, Statistics]
+            New statistics
+
+        Returns
+        -------
+        Statistics
+            Statistics updated
+        """
+        if isinstance(stats, Statistics):
+            new_obj = copy.deepcopy(self)
+            for param in self._params:
+                setattr(new_obj, param, getattr(self, param) + getattr(stats, param))
+            return new_obj
+
+        score_rat, score_python, moves = stats
+        self.score_rat.append(score_rat)
+        self.score_python.append(score_python)
+        if score_rat > score_python:
+            self.win_rat += 1
+        elif score_rat < score_python:
+            self.win_python += 1
+        else:
+            self.win_rat += 0.5
+            self.win_python += 0.5
+        self.moves.append(moves)
+        self.num_games += 1
+        return self
+
+    def reset(self):
+        """Reset statistics
+        """
+        self.score_python = []
+        self.score_rat = []
+        self.moves = []
+        self.win_python = 0
+        self.win_rat = 0
+        self.num_games = 0
+
+
 def parse_args():
     parser = argparse.ArgumentParser("Simulator of PyRat")
     parser.add_argument('--rat', type=str, metavar="rat_file", default="",
@@ -290,6 +394,7 @@ def play_game(args):
     game = PyRat(**args_dict)
     player.preprocessing(None, game.width, game.height, game.enemy, game.player,
                          game.piecesOfCheese, 30000)
+    stats = Statistics()
 
     # Run all games
     python_name = game.opponent.__name__
@@ -314,8 +419,14 @@ def play_game(args):
             print(f"The Rat ({rat_name}) and the Python ({python_name}) "
                   f"got the same number of pieces of cheese! ({score})")
 
+        # Update statistics
+        stats += (game.score, game.enemy_score, game.round)
+
         # To next game, reset all status
         game.reset()
+
+    # Print summary
+    print(json.dumps(stats.get_stats(), indent=4))
 
 
 if __name__ == "__main__":
