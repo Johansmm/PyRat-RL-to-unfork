@@ -82,6 +82,8 @@ class PyRat(object):
             action_y = 1
         elif action == MOVE_DOWN:
             action_y = -1
+        elif action is None:
+            print("FUUUU: Player uncertain movement. Stay in same position.")
         else:
             raise ValueError("INVALID MOVEMENT PLAYER")
         (x, y) = self.player
