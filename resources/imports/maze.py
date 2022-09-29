@@ -17,7 +17,6 @@
 
 import random
 import sys
-import resources.imports.parameters
 
 sys.setrecursionlimit(10**6)
 
