@@ -77,12 +77,18 @@ class PyRat(object):
         elif enemy_action == MOVE_RIGHT and xx < self.width - 1:
             enemy_action_x = +1
         elif enemy_action not in ALL_MOVES:
+            self.miss_enemy += 1
             print("FUUUU: Opponent uncertain movement. Stay in same position.")
-        self.enemy = (xx + enemy_action_x, yy + enemy_action_y)
+        new_x, new_y = (xx + enemy_action_x, yy + enemy_action_y)
+        if new_x < 0 or new_x > self.width - 1 or new_y < 0 or new_y > self.height - 1:
+            new_x, new_y = xx, yy
+            self.miss_enemy += 1
+        self.enemy = (new_x, new_y)
 
         self.round += 1
         action_x = 0
         action_y = 0
+        self.illegal_move = False
         if action == MOVE_LEFT:
             action_x = -1
         elif action == MOVE_RIGHT:
@@ -92,17 +98,19 @@ class PyRat(object):
         elif action == MOVE_DOWN:
             action_y = -1
         elif action is None:
+            self.illegal_move = True
             print("FUUUU: Player uncertain movement. Stay in same position.")
         else:
             raise ValueError("INVALID MOVEMENT PLAYER")
         (x, y) = self.player
         new_x = x + action_x
         new_y = y + action_y
-        self.illegal_move = False
         if new_x < 0 or new_x > self.width - 1 or new_y < 0 or new_y > self.height - 1:
             new_x = x
             new_y = y
             self.illegal_move = True
+        if self.illegal_move:
+            self.miss_player += 1
         self.player = (new_x, new_y)
         self._draw_state()
 
@@ -235,6 +243,8 @@ class PyRat(object):
             self.opponent.preprocessing(None, self.width, self.height,
                                         self.enemy, self.player, self.piecesOfCheese, 30000)
             self.preprocess = True
+        self.miss_enemy = 0
+        self.miss_player = 0
 
 
 class Statistics():
@@ -287,6 +297,8 @@ class Statistics():
         if self.num_games == 0:
             raise ValueError("Please introduce at least one game!.")
         return {
+            "miss_rat": sum(self.miss_rat),
+            "miss_python": sum(self.miss_python),
             "moves_per_player": sum(self.moves) / self.num_games,
             "score_rat": sum(self.score_rat) / self.num_games,
             "score_python": sum(self.score_python) / self.num_games,
@@ -314,7 +326,12 @@ class Statistics():
                 setattr(new_obj, param, getattr(self, param) + getattr(stats, param))
             return new_obj
 
-        score_rat, score_python, moves = stats
+        if len(stats) == 3:
+            score_rat, score_python, moves = stats
+        elif len(stats) == 5:
+            score_rat, score_python, moves, miss_rat, miss_python = stats
+        else:
+            raise ValueError(f"Impossible to unzip statistics: {stats}")
         self.score_rat.append(score_rat)
         self.score_python.append(score_python)
         if score_rat > score_python:
@@ -325,6 +342,8 @@ class Statistics():
             self.win_rat += 0.5
             self.win_python += 0.5
         self.moves.append(moves)
+        self.miss_rat.append(miss_rat)
+        self.miss_python.append(miss_python)
         self.num_games += 1
         return self
 
@@ -337,6 +356,8 @@ class Statistics():
         self.win_python = 0
         self.win_rat = 0
         self.num_games = 0
+        self.miss_python = []
+        self.miss_rat = []
 
 
 def parse_args():
@@ -420,7 +441,7 @@ def play_game(args):
                   f"got the same number of pieces of cheese! ({score})")
 
         # Update statistics
-        stats += (game.score, game.enemy_score, game.round)
+        stats += (game.score, game.enemy_score, game.round, game.miss_player, game.miss_enemy)
 
         # To next game, reset all status
         game.reset()
