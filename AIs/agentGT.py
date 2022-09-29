@@ -19,7 +19,7 @@
 # In this example, we can obtain scores in the order of: "win_python": 0.07 "win_rat": 0.93
 
 import numpy as np
-from .utils import MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, move, move_to_target
+from .utils import MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, move, move_to_target, update_scores
 from . import manh
 
 # During our turn we continue going to the next target, unless the piece of cheese it originally
@@ -108,50 +108,6 @@ def best_target(playerLocation, opponentLocation, playerScore, opponentScore, pi
     return best_target_so_far, best_score_so_far
 
 
-def checkEatCheese(playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese):
-    """Function that update list of remaining cheeses
-
-    Each player win +1 point iff they are alone on the square with a cheese. If both players are
-    in the same square and there is a cheese on the square each player gets 0.5 points.
-    The cheeses that were taken are removed from the list **inplace**.
-
-    Parameters
-    ----------
-    playerLocation : Tuple[int, int]
-        Current player position
-    opponentLocation : Tuple[int, int]
-        Current opponent position
-    playerScore : float
-        Current player score
-    opponentScore : float
-        Current opponent score
-    piecesOfCheese : List[Tuple[int, int]]
-        List of remaining cheeses
-
-    Returns
-    -------
-    Tuple[float, float]
-        Scores updated
-    """
-    # Check if player is on cheese
-    player_on_cheese = playerLocation in piecesOfCheese
-    if player_on_cheese:
-        playerScore += 1.0
-        piecesOfCheese.remove(playerLocation)
-
-    # Now check if opponent is on another cheese
-    opponent_on_cheese = opponentLocation in piecesOfCheese
-    if opponent_on_cheese:
-        opponentScore += 1.0
-        piecesOfCheese.remove(opponentLocation)
-
-    # Penalizes players if they obtained the same cheese
-    if player_on_cheese and playerLocation == opponentLocation:
-        playerScore -= 0.5
-        opponentScore += 0.5
-    return playerScore, opponentScore
-
-
 def simulate_game_until_target(target, playerLocation, opponentLocation, playerScore,
                                opponentScore, piecesOfCheese):
     """Simulate what will happen until we reach the target
@@ -186,9 +142,9 @@ def simulate_game_until_target(target, playerLocation, opponentLocation, playerS
         # using turn_of_opponent and move
         opponentLocation = move(opponentLocation, turn_of_opponent(
             opponentLocation, piecesOfCheese))
-        # Finally use the function checkEatCheese to see if any of the players is in the same
+        # Finally use the function update_scores to see if any of the players is in the same
         # square of a cheese.
-        playerScore, opponentScore = checkEatCheese(
+        playerScore, opponentScore = update_scores(
             playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese)
     return playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese
 
