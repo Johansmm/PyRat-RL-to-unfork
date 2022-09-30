@@ -12,6 +12,26 @@ from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES, upda
 from resources.imports.maze import generate_pieces_of_cheese
 
 
+def reload_players(*players):
+    """Return the modules of players after reload them
+
+    Parameters
+    ----------
+    players : List[module]
+        player(s) to reload
+
+    Returns
+    -------
+    List[module]
+        player(s) reloaded
+
+    """
+    if len(players) == 1:
+        return players[0].__loader__.load_module()
+    else:
+        return tuple(player.__loader__.load_module() for player in players)
+
+
 class PyRat(object):
     """Pyrat simulator, which performs a synchronous game between two players,
     eliminating the animations to obtain faster games.
@@ -37,10 +57,13 @@ class PyRat(object):
         Oponent AIs (--python), by default manh
     random_seed : int, optional
         Random seed, by default None
+    opponent_reset : bool, optional
+        Reload opponent when call :func:`reset`, by default False
     """
 
     def __init__(self, width=21, height=15, round_limit=200, cheeses=41, symmetric=False,
-                 start_random=True, opponent=manh, random_seed=None, **kwargs):
+                 start_random=True, opponent=manh, random_seed=None, opponent_reset=False,
+                 **kwargs):
         self.preprocess = False
         self.symmetric = symmetric
         self.start_random = start_random
@@ -52,6 +75,7 @@ class PyRat(object):
         self.round = 0
         self.score = 0
         self.opponent = opponent
+        self.opponent_reset = opponent_reset
         self.reset(random_seed=random_seed)
 
     def _update_state(self, action, enemy_action):
@@ -239,7 +263,8 @@ class PyRat(object):
         self.score = 0
         self.enemy_score = 0
         self._draw_state()
-        if not self.preprocess:
+        if not self.preprocess or self.opponent_reset:
+            self.opponent = reload_players(self.opponent)
             self.opponent.preprocessing(None, self.width, self.height,
                                         self.enemy, self.player, self.piecesOfCheese, 30000)
             self.preprocess = True
@@ -412,7 +437,7 @@ def play_game(args):
     args_dict["round_limit"] = args_dict.pop("max_turns")
     args_dict["symmetric"] = not args_dict.pop("nonsymmetric")
     args_dict["cheeses"] = args_dict.pop("pieces")
-    game = PyRat(**args_dict)
+    game = PyRat(**args_dict, opponent_reset=True)
     player.preprocessing(None, game.width, game.height, game.enemy, game.player,
                          game.piecesOfCheese, 30000)
     stats = Statistics()
@@ -443,8 +468,9 @@ def play_game(args):
         # Update statistics
         stats += (game.score, game.enemy_score, game.round, game.miss_player, game.miss_enemy)
 
-        # To next game, reset all status
+        # To next game, reset all status (including players)
         game.reset()
+        player = reload_players(player)
 
     # Print summary
     print(json.dumps(stats.get_stats(), indent=4))
