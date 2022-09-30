@@ -3,6 +3,7 @@ import sys
 import json
 import copy
 import random
+import time
 import numpy as np
 import argparse
 import importlib.util
@@ -303,6 +304,8 @@ class Statistics():
     def __init__(self, ini_score_rat=0.0, ini_score_python=0.0, ini_moves=0):
         self.reset()
         self._params = [k for k, v in vars(self).items() if isinstance(v, (list, float, int))]
+        # Delete time variables
+        self._params = [k for k in self._params if "time" not in k]
         if ini_score_rat != 0 or ini_score_python != 0 or ini_moves != 0:
             self.__add__((ini_score_rat, ini_score_python, ini_moves))
 
@@ -321,6 +324,8 @@ class Statistics():
         """
         if self.num_games == 0:
             raise ValueError("Please introduce at least one game!.")
+        turn_time = (self.current_time - self.start_time) / sum(self.moves)
+        turn_time = f"{turn_time:.3e} s" if turn_time < 1 else f"{turn_time:.3f} s"
         return {
             "miss_rat": sum(self.miss_rat),
             "miss_python": sum(self.miss_python),
@@ -329,7 +334,8 @@ class Statistics():
             "score_python": sum(self.score_python) / self.num_games,
             "win_rat": self.win_rat / self.num_games,
             "win_python": self.win_python / self.num_games,
-            "num_games": self.num_games
+            "num_games": self.num_games,
+            "turn_time": turn_time,
         }
 
     def __add__(self, stats):
@@ -349,6 +355,8 @@ class Statistics():
             new_obj = copy.deepcopy(self)
             for param in self._params:
                 setattr(new_obj, param, getattr(self, param) + getattr(stats, param))
+            # We add the total time of previous statistics
+            new_obj.start_time -= stats.current_time - stats.start_time
             return new_obj
 
         if len(stats) == 3:
@@ -370,6 +378,7 @@ class Statistics():
         self.miss_rat.append(miss_rat)
         self.miss_python.append(miss_python)
         self.num_games += 1
+        self.current_time = time.time()
         return self
 
     def reset(self):
@@ -383,6 +392,7 @@ class Statistics():
         self.num_games = 0
         self.miss_python = []
         self.miss_rat = []
+        self.start_time = self.current_time = time.time()
 
 
 def parse_args():
