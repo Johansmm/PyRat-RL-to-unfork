@@ -24,8 +24,9 @@ from . import manh
 
 # During our turn we continue going to the next target, unless the piece of cheese it originally
 # contained has been taken.
-# In such case, we compute the new best target to go to
-current_target = (-1, -1)
+# In such case, we pass at the next better target. At the beginning, there is not a initial target
+current_targets = []
+final_score = 0.0
 
 
 def turn_of_opponent(opponentLocation, piecesOfCheese, oponent=manh):
@@ -57,11 +58,11 @@ def preprocessing(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocati
     pass
 
 
-def best_target(playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese):
+def best_targets(playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese):
     """Recursive function that goes through the trees of possible plays.
 
-    It takes as arguments a given situation, and return a best target piece of cheese for
-    the player, such that aiming to grab this piece of cheese will eventually lead to a
+    It takes as arguments a given situation, and return a best targets piece of cheese for
+    the player, such that aiming to grab these piece of cheese will eventually lead to a
     maximum score.
 
     Parameters
@@ -89,21 +90,24 @@ def best_target(playerLocation, opponentLocation, playerScore, opponentScore, pi
     # playerScore + opponentScore + piecesOfCheese
     totalPieces = len(piecesOfCheese) + playerScore + opponentScore
     if playerScore > totalPieces / 2 or opponentScore > totalPieces / 2 or len(piecesOfCheese) == 0:
-        return (-1, -1), playerScore
+        return [(-1, -1)], playerScore
 
     # If the match is not over, then the player can aim for any of the remaining pieces of cheese
     # So we will simulate the game to each of the pieces, which will then by recurrence test all
     # the possible trees.
+    # It will remember each step as soon as possible, return the complete way to win.
     best_score_so_far = -1
-    best_target_so_far = (-1, -1)
+    best_target_so_far = []
     for target in piecesOfCheese:
+        # Play's until go to target
         end_state = simulate_game_until_target(
             target, playerLocation, opponentLocation,
             playerScore, opponentScore, piecesOfCheese.copy())
-        _, score = best_target(*end_state)
+        # Recover the next better movements. Save the moves if are better
+        list_targets, score = best_targets(*end_state)
         if score > best_score_so_far:
             best_score_so_far = score
-            best_target_so_far = target
+            best_target_so_far = [target] + list_targets
         # If player knows that will win, it makes no sense to continue
         if score > totalPieces / 2 and score > end_state[-2]:
             break
@@ -183,17 +187,27 @@ def turn(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation, playe
     str
         The movement to be performed between four choises: ["D", "R", "L", "U"]
     """
-    global current_target
-    if current_target not in piecesOfCheese:
-        current_target, score = best_target(
+    global current_targets, final_score
+    # If player does not know the way to win, predicts it
+    if len(current_targets) == 0:
+        current_targets, final_score = best_targets(
             playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese)
-        print(f"My new target is {current_target} and I will finish with {score} pieces of cheese")
+    # Therefore, it checks if next target exists in the piecesOfCheese
+    old_target = None
+    while not (len(current_targets) == 0 or current_targets[0] in piecesOfCheese):
+        old_target = current_targets.pop(0)
+    cur_target = (-1, -1) if len(current_targets) == 0 else current_targets[0]
+
+    # Print new target only if it changed
+    if old_target is not None:
+        print(f"My new targets is {cur_target} and I will finish with "
+              f"{final_score} pieces of cheese.")
 
     # Return the movement towards the target
-    if current_target[1] > playerLocation[1]:
+    if cur_target[1] > playerLocation[1]:
         return MOVE_UP
-    if current_target[1] < playerLocation[1]:
+    if cur_target[1] < playerLocation[1]:
         return MOVE_DOWN
-    if current_target[0] > playerLocation[0]:
+    if cur_target[0] > playerLocation[0]:
         return MOVE_RIGHT
     return MOVE_LEFT
