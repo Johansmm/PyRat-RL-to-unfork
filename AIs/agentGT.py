@@ -21,6 +21,7 @@
 import numpy as np
 from .utils import MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, move, move_to_target, update_scores
 from . import manh
+from resources.imports import logger
 
 # During our turn we continue going to the next target, unless the piece of cheese it originally
 # contained has been taken.
@@ -200,8 +201,8 @@ def turn(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation, playe
 
     # Print new target only if it changed
     if old_target is not None:
-        print(f"My new targets is {cur_target} and I will finish with "
-              f"{final_score} pieces of cheese.")
+        logger.info(f"My new targets is {cur_target} and I will finish with "
+                    f"{final_score} pieces of cheese.")
 
     # Return the movement towards the target
     if cur_target[1] > playerLocation[1]:
