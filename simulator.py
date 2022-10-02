@@ -11,6 +11,7 @@ import importlib.util
 from AIs import manh
 from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES, update_scores
 from resources.imports.maze import generate_pieces_of_cheese
+from resources.imports import logger
 
 
 def reload_players(*players):
@@ -103,7 +104,7 @@ class PyRat(object):
             enemy_action_x = +1
         elif enemy_action not in ALL_MOVES:
             self.miss_enemy += 1
-            print("FUUUU: Opponent uncertain movement. Stay in same position.")
+            logger.debug("FUUUU: Opponent uncertain movement. Stay in same position.")
         new_x, new_y = (xx + enemy_action_x, yy + enemy_action_y)
         if new_x < 0 or new_x > self.width - 1 or new_y < 0 or new_y > self.height - 1:
             new_x, new_y = xx, yy
@@ -124,7 +125,7 @@ class PyRat(object):
             action_y = -1
         elif action is None:
             self.illegal_move = True
-            print("FUUUU: Player uncertain movement. Stay in same position.")
+            logger.debug("FUUUU: Player uncertain movement. Stay in same position.")
         else:
             raise ValueError("INVALID MOVEMENT PLAYER")
         (x, y) = self.player
@@ -468,12 +469,12 @@ def play_game(args):
         # Print records of game
         score = f"{game.score}/{game.enemy_score}"
         if game.score < game.enemy_score:
-            print(f"The Python ({python_name}) won the match! ({score})")
+            logger.info(f"The Python ({python_name}) won the match! ({score})")
         elif game.score > game.enemy_score:
-            print(f"The Rat ({rat_name}) won the match! ({score})")
+            logger.info(f"The Rat ({rat_name}) won the match! ({score})")
         else:
-            print(f"The Rat ({rat_name}) and the Python ({python_name}) "
-                  f"got the same number of pieces of cheese! ({score})")
+            logger.info(f"The Rat ({rat_name}) and the Python ({python_name}) "
+                        f"got the same number of pieces of cheese! ({score})")
 
         # Update statistics
         stats += (game.score, game.enemy_score, game.round, game.miss_player, game.miss_enemy)
