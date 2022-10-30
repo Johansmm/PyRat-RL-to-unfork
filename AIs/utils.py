@@ -5,7 +5,7 @@ MOVE_UP = 'U'
 ALL_MOVES = [MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP]
 
 
-def move(location, move):
+def make_move(location, move):
     """Update an input location (x,y) with the desired movement
 
     Parameters
@@ -71,13 +71,13 @@ def move_to_target(location, target):
         The updated location
     """
     if target[1] > location[1]:
-        return move(location, MOVE_UP)
+        return make_move(location, MOVE_UP)
     if target[1] < location[1]:
-        return move(location, MOVE_DOWN)
+        return make_move(location, MOVE_DOWN)
     if target[0] > location[0]:
-        return move(location, MOVE_RIGHT)
+        return make_move(location, MOVE_RIGHT)
     if target[0] < location[0]:
-        return move(location, MOVE_LEFT)
+        return make_move(location, MOVE_LEFT)
     # We are in the target !
     return location
 

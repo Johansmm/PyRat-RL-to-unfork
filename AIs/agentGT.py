@@ -19,7 +19,8 @@
 # In this example, we can obtain scores in the order of: "win_python": 0.08 "win_rat": 0.91
 
 import numpy as np
-from .utils import MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP, move, move_to_target, update_scores
+from .utils import (MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_UP,
+                    make_move, move_to_target, update_scores)
 from . import manh
 from resources.imports import logger
 
@@ -148,7 +149,7 @@ def simulate_game_until_target(target, playerLocation, opponentLocation, playerS
         playerLocation = move_to_target(playerLocation, target)
         # Every time that we move the opponent also moves. update the position of the opponent
         # using turn_of_opponent and move
-        opponentLocation = move(opponentLocation, turn_of_opponent(
+        opponentLocation = make_move(opponentLocation, turn_of_opponent(
             opponentLocation, piecesOfCheese))
         # Finally use the function update_scores to see if any of the players is in the same
         # square of a cheese.
