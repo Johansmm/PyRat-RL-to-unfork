@@ -14,26 +14,6 @@ from resources.imports.maze import generate_pieces_of_cheese
 from resources.imports import logger
 
 
-def reload_players(*players):
-    """Return the modules of players after reload them
-
-    Parameters
-    ----------
-    players : List[module]
-        player(s) to reload
-
-    Returns
-    -------
-    List[module]
-        player(s) reloaded
-
-    """
-    if len(players) == 1:
-        return players[0].__loader__.load_module()
-    else:
-        return tuple(player.__loader__.load_module() for player in players)
-
-
 class PyRat(object):
     """Pyrat simulator, which performs a synchronous game between two players,
     eliminating the animations to obtain faster games.
@@ -266,7 +246,6 @@ class PyRat(object):
         self.enemy_score = 0
         self._draw_state()
         if not self.preprocess or self.opponent_reset:
-            self.opponent = reload_players(self.opponent)
             self.opponent.preprocessing(None, self.width, self.height,
                                         self.enemy, self.player, self.piecesOfCheese, 30000)
             self.preprocess = True
@@ -449,8 +428,6 @@ def play_game(args):
     args_dict["symmetric"] = not args_dict.pop("nonsymmetric")
     args_dict["cheeses"] = args_dict.pop("pieces")
     game = PyRat(**args_dict, opponent_reset=True)
-    player.preprocessing(None, game.width, game.height, game.enemy, game.player,
-                         game.piecesOfCheese, 30000)
     stats = Statistics()
 
     # Run all games
@@ -458,8 +435,13 @@ def play_game(args):
     rat_name = player.__name__
     for match in range(args.num_games):
         print(f"Using seed {game.random_seed}")
+        # Reset player in new game
+        player.preprocessing(None, game.width, game.height, game.enemy, game.player,
+                             game.piecesOfCheese, 30000)
         if args.num_games > 1:
             print(f"Match {match+1}/{args.num_games}")
+
+        # Run game until end
         while not game._is_over():
             # From the state of the game, the player can make a decision
             action = player.turn(*game.observe(full=True))
@@ -479,9 +461,8 @@ def play_game(args):
         # Update statistics
         stats += (game.score, game.enemy_score, game.round, game.miss_player, game.miss_enemy)
 
-        # To next game, reset all status (including players)
+        # To next game, reset all status
         game.reset()
-        player = reload_players(player)
 
     # Print summary
     print(json.dumps(stats.get_stats(), indent=4))
