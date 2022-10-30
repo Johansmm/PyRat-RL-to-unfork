@@ -54,10 +54,12 @@ def turn_of_opponent(opponentLocation, piecesOfCheese, oponent=manh):
     return opponent_move
 
 
-# We dont need the preprocessing function
+# Reset internal status
 def preprocessing(mazeMap, mazeWidth, mazeHeight, playerLocation, opponentLocation,
                   piecesOfCheese, timeAllowed):
-    pass
+    global current_targets, final_score
+    current_targets = []
+    final_score = 0.0
 
 
 def best_targets(playerLocation, opponentLocation, playerScore, opponentScore, piecesOfCheese):
