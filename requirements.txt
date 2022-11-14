@@ -4,3 +4,4 @@ matplotlib
 pygame
 gdown
 ipynb_py_convert
+pytorch_lightning
