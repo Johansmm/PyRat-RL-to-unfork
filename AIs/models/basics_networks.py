@@ -184,6 +184,9 @@ class PerceptronLit(BaseLit):
         loss = self._common_step(batch=train_batch, batch_idx=batch_idx)
         self.log("train_loss", loss)
         self.log("epsilon", self.get_epsilon(), prog_bar=True)
+
+        # At the end, make a simplest step into the game
+        self.trainer.play_step(epsilon=self.get_epsilon())
         return loss
 
     def validation_step(self, val_batch: Tuple[torch.Tensor, torch.Tensor], batch_idx):
