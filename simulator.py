@@ -80,6 +80,10 @@ class PyRat(object):
         self.opponent_reset = opponent_reset
         self.reset(random_seed=random_seed)
 
+    @property
+    def action_space(self):
+        return ALL_MOVES
+
     def _update_state(self, action, enemy_action):
         """Players' action, which update the state of the game
 
