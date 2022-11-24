@@ -7,6 +7,7 @@ import time
 import numpy as np
 import argparse
 import importlib.util
+import inspect
 
 from AIs import manh
 from AIs.utils import MOVE_LEFT, MOVE_RIGHT, MOVE_DOWN, MOVE_UP, ALL_MOVES, update_scores
@@ -83,6 +84,81 @@ class PyRat(object):
     @property
     def action_space(self):
         return ALL_MOVES
+
+    @classmethod
+    def add_argparse_args(cls, parent_parser, use_argument_group=True):
+        """Add argparse argumentos to a parent parser.
+
+        Parameters
+        ----------
+        parent_parser : ArgumentParser
+            The custom cli arguments parser, which will be extended by
+            the class's default arguments.
+        use_argument_group:
+            By default, this is True, and uses ``add_argument_group`` to add
+            a new group. If False, this will use old behavior.
+
+        Returns
+        -------
+            If use_argument_group is True, returns ``parent_parser`` to keep old
+            workflows. If False, will return the new ArgumentParser object.
+
+        Notes
+        -----
+            Inspire from :mod:`pytorch_lightning.utilities.argparse`
+        """
+        if use_argument_group:
+            group_name = f"{cls.__module__}.{cls.__qualname__}"
+            parser = parent_parser.add_argument_group(group_name)
+        else:
+            parser = argparse.ArgumentParser(parents=[parent_parser], add_help=False)
+
+        parser.add_argument('-x', '--width', type=int, metavar="x", default=31,
+                            help='Width of the maze, by default %(default)s')
+        parser.add_argument('-y', '--height', type=int, metavar="y", default=29,
+                            help='Height of the maze, by default %(default)s')
+        parser.add_argument('-p', '--pieces', type=int, metavar="p", default=41, dest="cheese",
+                            help='Number of pieces of cheese, by default %(default)s')
+        parser.add_argument('--nonsymmetric', action="store_false", dest="symmetric",
+                            help='Do not enforce symmetry of the maze')
+        parser.add_argument('-mt', '--max_turns', type=int, metavar="mt", default=2000,
+                            dest="round_limit", help='Max number of turns, by default %(default)s')
+        parser.add_argument('--start_random', action="store_true",
+                            help='Players start at random location in the maze')
+        parser.add_argument('--random_seed', type=int, metavar="random_seed", default=None,
+                            help='Random seed to use in order to generate a specific maze')
+
+        if use_argument_group:
+            return parent_parser
+        return parser
+
+    @classmethod
+    def from_argparse_args(cls, args, **kwargs):
+        """Create an instance from CLI arguments.
+
+        Parameters
+        ----------
+        args : Union[Namespace, ArgumentParser]
+            The parser or namespace to take arguments from.
+        kwargs : dict
+            Additional keyword arguments that may override ones in the parser or namespace.
+
+        Returns
+        -------
+        :obj:`PyRat`
+            Instance of the class started with the arguments
+
+        Notes
+        -----
+            Code take from :mod:`pytorch_lightning.utilities.argparse`
+        """
+        params = vars(args)
+
+        # We only want to pass in valid Trainer args, the rest may be user specific
+        valid_kwargs = inspect.signature(cls.__init__).parameters
+        trainer_kwargs = {name: params[name] for name in valid_kwargs if name in params}
+        trainer_kwargs.update(**kwargs)
+        return cls(**trainer_kwargs)
 
     def _update_state(self, action, enemy_action):
         """Players' action, which update the state of the game
@@ -406,22 +482,9 @@ def parse_args():
                         help='Program to control the rat (local file)')
     parser.add_argument('--python', type=str, metavar="python_file", default="",
                         help='Program to control the python (local file)')
-    parser.add_argument('-x', '--width', type=int, metavar="x", default=31,
-                        help='Width of the maze, by default %(default)s')
-    parser.add_argument('-y', '--height', type=int, metavar="y", default=29,
-                        help='Height of the maze, by default %(default)s')
-    parser.add_argument('-p', '--pieces', type=int, metavar="p", default=41,
-                        help='Number of pieces of cheese, by default %(default)s')
-    parser.add_argument('--nonsymmetric', action="store_true",
-                        help='Do not enforce symmetry of the maze')
-    parser.add_argument('-mt', '--max_turns', type=int, metavar="mt", default=2000,
-                        help='Max number of turns, by default %(default)s')
-    parser.add_argument('--start_random', action="store_true",
-                        help='Players start at random location in the maze')
-    parser.add_argument('--random_seed', type=int, metavar="random_seed", default=None,
-                        help='Random seed to use in order to generate a specific maze')
     parser.add_argument('--num_games', type=int, metavar="num_games", default=1,
                         help='Number of games to launch (for statistics), by default %(default)s')
+    parser = PyRat.add_argparse_args(parser, use_argument_group=False)
     return parser.parse_args()
 
 
@@ -441,25 +504,19 @@ def _read_player(filename):
 
 
 def play_game(args):
-    args_dict = vars(args)
     # Read players from python script
-    player = _read_player(args_dict.pop("rat"))
-    opponent = args_dict.pop("python")
-    if opponent != "":
-        args_dict["opponent"] = _read_player(opponent)
+    player = _read_player(args.rat)
+    args.opponent = _read_player(args.python)
+    player_name = player.__name__
+    opponent_name = args.opponent.__name__
 
     # Create the enviroment of game
-    args_dict["round_limit"] = args_dict.pop("max_turns")
-    args_dict["symmetric"] = not args_dict.pop("nonsymmetric")
-    args_dict["cheeses"] = args_dict.pop("pieces")
-    game = PyRat(**args_dict, opponent_reset=True)
+    game = PyRat.from_argparse_args(args, opponent_reset=True)
     player.preprocessing(None, game.width, game.height, game.enemy, game.player,
                          game.piecesOfCheese, 30000)
     stats = Statistics()
 
     # Run all games
-    python_name = game.opponent.__name__
-    rat_name = player.__name__
     for match in range(args.num_games):
         print(f"Using seed {game.random_seed}")
         if args.num_games > 1:
@@ -473,11 +530,11 @@ def play_game(args):
         # Print records of game
         score = f"{game.score}/{game.enemy_score}"
         if game.score < game.enemy_score:
-            logger.info(f"The Python ({python_name}) won the match! ({score})")
+            logger.info(f"The Python ({opponent_name}) won the match! ({score})")
         elif game.score > game.enemy_score:
-            logger.info(f"The Rat ({rat_name}) won the match! ({score})")
+            logger.info(f"The Rat ({player_name}) won the match! ({score})")
         else:
-            logger.info(f"The Rat ({rat_name}) and the Python ({python_name}) "
+            logger.info(f"The Rat ({player_name}) and the Python ({opponent_name}) "
                         f"got the same number of pieces of cheese! ({score})")
 
         # Update statistics
